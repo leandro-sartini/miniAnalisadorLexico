@@ -1,6 +1,10 @@
 /*  Engenharia da Computação - BEC
     Leandro Sartini de Campos
-    Gustavo Donnangelo Cassettari */
+    Gustavo Donnangelo Cassettari
+    Todo o trabalho foi feito no Sublime Text
+    Todo o trabalho foi compilado pelo CMD
+    Utilizando a linha de comando:
+    gcc miniAnalisadorLexico.c -o teste && .\teste arquivo.ptl */
 
 
 #include <stdio.h>
