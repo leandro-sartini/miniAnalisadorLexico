@@ -1,3 +1,8 @@
+/*  Engenharia da Computação - BEC
+    Leandro Sartini de Campos
+    Gustavo Donnangelo Cassettari */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -7,6 +12,7 @@
 #define BRANCO 32
 #define TAMANHO 1000
 
+//Inicia uma estrutura Atomo
 typedef enum{
     ERRO,
     IDENTIFICADOR,
@@ -31,6 +37,7 @@ typedef enum{
     EOS
 }Atomo;
 
+//Array com uma lista de strings para as mensagems com nomes dos Atomos
 char *msgAtomo[] = {
     "ERRO",
     "IDENTIFICADOR",
@@ -54,6 +61,7 @@ char *msgAtomo[] = {
     "RESTO",
     "FIM DO ARQUIVO"};
 
+//Array com uma lista de strings para as mensagems com nomes das palavras reservadas
 char *PalavrasRes[] = {
     "ALGORITMO", // Inicio do algoritmo
     "ATE", // Inicializa a variável de controle do PARA
@@ -77,6 +85,7 @@ char *PalavrasRes[] = {
     "VARIAVEIS" // Início do bloco de declaração de variáveis
 };
 
+//Declarando as funções
 Atomo reconhece_ID(char);
 Atomo reconhece_NUM(char);
 Atomo reconhece_OP(char);
@@ -93,25 +102,31 @@ int nlinha = 1;
 char *Atomo1;
 int numPalavrasRes = 20;
 
+//Faz o buffer andar um espaço para frente na memória do vetor
 char proximo_char(void) {
     return *buffer++;
 }
 
+//Faz o buffer andar um espaço para trás na memória do vetor
 void retract_char(){
     buffer--;
 }
 
+
+//Esta função compara a palavra que está recebendo da função reconhece_ID com uma palavra do Array PalavrasRes
 Atomo reconhece_RES(char *palavra){
     for( int i = 0; i < 20; i++ ) {
         if ( ( stricmp(palavra, PalavrasRes[i]) ) == 0) {
             Atomo1 = palavra;
-            return PALAVRA_RESERVADA;
+            return PALAVRA_RESERVADA; // Retorna Palavra reservada
         }
     }
     Atomo1 = palavra;
-    return IDENTIFICADOR;   
+    return IDENTIFICADOR; //Retorna identificador caso não tenha encontrado Palavra Reservada
 }
 
+
+//Esta função reconhece se é identificador ou não
 Atomo reconhece_ID(char n){
     char c;
     char *palavra = (char *)calloc( 50 , sizeof(char) );
@@ -128,14 +143,14 @@ Atomo reconhece_ID(char n){
         }   
     }
     
-    atomo = reconhece_RES(palavra);
+    atomo = reconhece_RES(palavra); //Joga a palavra na função para identificar se é palavra reservada ou não
     retract_char();
-    return atomo;
+    return atomo; //Retorna o atomo para o main
 }
 
 
 
-
+//Essa função faz toda a leitura dos chars ao gravados no arquivo.ptl
 Atomo proximo_token() {
     char c,d;
     Atomo atomo = ERRO;
@@ -154,32 +169,34 @@ Atomo proximo_token() {
 
     c = proximo_char();
 
-    if( isalpha(c) ) {
+    if( isalpha(c) ) { //Se c for alfanumérico ativa reconhece_ID
         atomo = reconhece_ID(c);
     }
-    if( isdigit(c) ) {
+    if( isdigit(c) ) { //Se c for um digito ativa reconhece_NUM
         atomo = reconhece_NUM(c);
     }
 
-    if(isascii(c) && !isalnum(c) && c != '"'){
+    if(isascii(c) && !isalnum(c) && c != '"'){ //Se c for ASCII, diferente de alfanumérico e diferente de " ativa reconhece_OP
         atomo = reconhece_OP(c);
     }
 
-    if(c == '"'){
+    if(c == '"'){ //Se c = A " Inicia a busca por uma frase ativando reconhece_FRASE
         atomo = reconhece_FRASE(c);
     }
 
-    if(c == '/'){
+    if(c == '/'){ //Se c = / Inicia a busca por um comentário ativando reconhece_COMM
         atomo = reconhece_COMM(c);
     } 
 
-    if(((int)c >= 40 && (int) c <= 46) || (int) c == 37 || (int) c == 59){
+    if(((int)c >= 40 && (int) c <= 46) || (int) c == 37 || (int) c == 59){ //Se c estiver estre alguns ASCII especificos ativa reconhece_n_atrib
         atomo = reconhece_n_atrib(c);
     }
 
     return atomo;
 }
 
+
+//Esta função reconhece um número inteiro ou real com um operador fracionario ou exponencial utilizando máquinas de estado retornando o Atomo NUM_REAL ou NUM_INTEIRO e o Lexeme Número.númeroE(+||-)Número
 Atomo reconhece_NUM(char n){
     char c,d;
     int i = 0;
@@ -201,6 +218,9 @@ Atomo reconhece_NUM(char n){
                     retract_char();
                     Atomo1 = numero;
                     return NUM_INT;
+                } else if (c == 'e' || c == 'E'){
+                    numero[i++] = c;
+                    estado = 5;
                 } else {
                     Atomo1 = "ERRO";
                     return ERRO;
@@ -221,6 +241,9 @@ Atomo reconhece_NUM(char n){
                 if(isdigit(c)) {
                     numero[i++] = c;
                     estado = 4;
+                } else if (c == 'e' || c == 'E'){
+                    numero[i++] = c;
+                    estado = 7;
                 } else if ( !isalpha(c) ) {
                     numero[i++] = c;
                     retract_char();
@@ -231,11 +254,63 @@ Atomo reconhece_NUM(char n){
                     return ERRO;
                 }
             break;
+            case 5:
+                c = proximo_char();
+                if(c == '+' || c == '-'){
+                    numero[i++]=c;
+                    estado = 6;
+                } else{
+                    Atomo1 = "ERRO";
+                    return ERRO;                    
+                }
+            break;
+            case 6:
+                c = proximo_char();
+                if (isdigit(c)){
+                    numero[i++]=c;
+                    estado = 6;
+                } else if ( !isalpha(c) ) {
+                    numero[i++] = c;
+                    retract_char();
+                    Atomo1 = numero;
+                    return NUM_INT;
+                } else{
+                    Atomo1 = "ERRO";
+                    return ERRO;                    
+                }
+            break;
+            case 7:
+                c = proximo_char();
+                if(c == '+' || c == '-'){
+                    numero[i++]=c;
+                    estado = 8;
+                } else{
+                    Atomo1 = "ERRO";
+                    return ERRO;                    
+                }
+            break;
+            case 8:
+                c = proximo_char();
+                if (isdigit(c)){
+                    numero[i++]=c;
+                    estado = 8;
+                } else if ( !isalpha(c) ) {
+                    numero[i++] = c;
+                    retract_char();
+                    Atomo1 = numero;
+                    return NUM_REAL;
+                } else{
+                    Atomo1 = "ERRO";
+                    return ERRO;                    
+                }
+            break;
         }
     }
 
 }
 
+
+//Esta função reconhece um Operador logico ou Relacional utilizando máquinas de estado e retornando o Atomo OP_RELACIONAL ou OP_Logico e o Lexeme < > = & $ ! <= >= <>
 Atomo reconhece_OP(char n){
     char c,d;
     retract_char();
@@ -306,6 +381,8 @@ Atomo reconhece_OP(char n){
     }
 }
 
+
+//Esta função reconhece uma frase utilizando máquinas de estado e retornando o Atomo Frase e o Lexeme " Frase \" inputada "
 Atomo reconhece_FRASE(char n){
     char c;
     retract_char();
@@ -313,7 +390,6 @@ Atomo reconhece_FRASE(char n){
     char *numero = (char *)calloc( 1000 , sizeof(char) );
     numero[i++] = n;
     c = proximo_char();
-    numero[i++] = c;
     int estado = 2;
     while(1){
         switch (estado)
@@ -363,7 +439,7 @@ Atomo reconhece_FRASE(char n){
 
 }
 
-
+////Esta função reconhece um comentário utilizando máquinas de estado e retornando o Atomo Comentario e o Lexeme /* Qualquer coisa digitada */
 Atomo reconhece_COMM(char n){
     char c,d;
     int i = 0;
@@ -425,6 +501,9 @@ Atomo reconhece_COMM(char n){
     }
 }
 
+
+
+////Esta função reconhece um Atomo não atribuido utilizando máquinas de estado e retornando o Atomo e o Lexeme do atomo não atribuido
 Atomo reconhece_n_atrib(char n){
     char c,d;
     retract_char();
@@ -464,12 +543,15 @@ Atomo reconhece_n_atrib(char n){
     }
 }
 
+
+//Main function
 void main(int args, char *argv[]) {
     Atomo atomo;
     FILE *f;
     char c, *string;
     int contaAtomo = 0;
 
+    //argv para chamar o arquivo com extensão .ptl
     f = fopen(argv[1], "r");
 
     while( fgetc(f) != EOF ) {
@@ -478,6 +560,7 @@ void main(int args, char *argv[]) {
 
     printf("%d\n", contaAtomo);
 
+    //Maloca o contaAtomo na string
     string = (char *)malloc( (contaAtomo+1) * sizeof(char) );
     string[contaAtomo] = '\0';
 
@@ -492,6 +575,7 @@ void main(int args, char *argv[]) {
 
     buffer = string;
 
+    //Imprime Linha Número da Linha, Atomo ATOMO, Lexeme LEXEME
     do{
          atomo = proximo_token();
          printf("Linha %d atomo %s lexeme %s\n", nlinha, msgAtomo[atomo], Atomo1 );
