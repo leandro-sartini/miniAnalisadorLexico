@@ -401,7 +401,6 @@ Atomo reconhece_FRASE(char n){
             case 2:
                 c = proximo_char();
                 if( (int)c == 92){
-                    numero[i++] = c;                
                     estado = 4;   
                 } else if (isalnum(c) || isascii(c)) {
                     numero[i++] = c;
@@ -414,7 +413,6 @@ Atomo reconhece_FRASE(char n){
             case 3:
                 c = proximo_char();
                 if( (int)c == 92){                 
-                    numero[i++] = c;
                     estado = 4;   
                 } else if ( c == '"') {                   
                     numero[i++] = c;
